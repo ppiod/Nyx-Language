@@ -1,0 +1,44 @@
+import "std:time" as time;
+import "std:io" as io;
+
+io.print("--- Time Module Examples ---");
+
+io.print("Current Epoch Time (now):", time.now());
+io.print("CPU Clock Time:", time.clock());
+io.print("Monotonic Time:", time.monotonic());
+
+io.print("Sleeping for 1.5 seconds...");
+time.sleep(1.5);
+io.print("Awake!");
+
+auto local_t = time.getLocalTime();
+io.print("Local Time Components (as a list):", local_t);
+if (len(local_t) == 8) {
+    io.print("   Year:", local_t[0], "Month:", local_t[1], "Day:", local_t[2]);
+    io.print("   Hour:", local_t[3], "Min:", local_t[4], "Sec:", local_t[5]);
+    io.print("   Weekday (Sun=0):", local_t[6], "Yearday (0-365):", local_t[7]);
+}
+
+auto utc_t = time.getUtcTime();
+io.print("UTC Time Components (as a list):", utc_t);
+
+io.print("Formatting current local time:");
+auto formatted_iso = time.format("%Y-%m-%d %H:%M:%S");
+io.print("   Default (ISO like):", formatted_iso);
+
+auto formatted_custom = time.format("%A, %B %d, %Y - %I:%M:%S %p");
+io.print("   Custom:", formatted_custom);
+
+auto formatted_with_newline_escape = time.format("Date: %Y/%m/%d\\nTime: %H:%M");
+io.print("   With newline escape in format string:");
+io.print(formatted_with_newline_escape);
+
+auto past_timestamp_offset = 3600 * 24 * 5; // 5 days in seconds
+auto current_now = time.now();
+auto past_timestamp = current_now - past_timestamp_offset; 
+
+io.print("Formatting past timestamp (approx 5 days ago):", past_timestamp);
+auto formatted_past_date = time.format("%Y-%m-%d", past_timestamp);
+io.print("   Formatted past date:", formatted_past_date);
+
+io.print("--------------------------");
