@@ -1,0 +1,158 @@
+import "std:list" as list_utils;
+
+output("--- Nyx List Examples ---");
+output("");
+
+output("1. Basic List Creation:");
+auto empty_list = [];
+auto numbers_list = [10, 20, 30, 40, 50];
+auto names_list = ["Alice", "Bob", "Charlie"];
+auto mixed_list = [1, "Nyx", true, 2.5, nyx_null];
+auto nested_list = [["Piod"], ["Banana", 2024], [true, "end"]];
+
+auto msg1_1 = "   Empty List: #{empty_list}";
+output(msg1_1);
+auto msg1_2 = "   Numbers List: #{numbers_list}";
+output(msg1_2);
+auto msg1_3 = "   Names List: #{names_list}";
+output(msg1_3);
+auto msg1_4 = "   Mixed List: #{mixed_list}";
+output(msg1_4);
+auto msg1_5 = "   Nested List: #{nested_list}";
+output(msg1_5);
+output("--------------------");
+output("");
+
+output("2. Accessing List Elements:");
+if (len(numbers_list) > 0) {
+    auto first_num_val = numbers_list[0];
+    auto msg2_1 = "   First number: #{first_num_val}";
+    output(msg2_1);
+}
+if (len(names_list) > 2) {
+    auto third_name_val = names_list[2];
+    auto msg2_2 = "   Third name: #{third_name_val}";
+    output(msg2_2);
+}
+if (len(mixed_list) > 1) {
+    auto mixed_el_val = mixed_list[1];
+    auto msg2_3 = "   Second element of mixed list: #{mixed_el_val}";
+    output(msg2_3);
+}
+if (len(nested_list) > 1 and len(nested_list[1]) > 0) {
+    auto nested_access_val = nested_list[1][0];
+    auto msg2_4 = "   Nested access (nested_list[1][0]): #{nested_access_val}";
+    output(msg2_4);
+}
+if (len(numbers_list) > 0) {
+    auto last_num_val = numbers_list[-1];
+    auto msg2_5 = "   Last number (e.g., numbers_list[-1]): #{last_num_val}";
+    output(msg2_5);
+}
+output("--------------------");
+output("");
+
+output("3. List Length (using global 'len()'):");
+auto len_numbers = len(numbers_list);
+auto msg3_1 = "   Length of numbers_list: #{len_numbers}";
+output(msg3_1);
+auto len_empty = len(empty_list);
+auto msg3_2 = "   Length of empty_list: #{len_empty}";
+output(msg3_2);
+auto len_nested = len(nested_list);
+auto msg3_3 = "   Length of nested_list: #{len_nested}";
+output(msg3_3);
+output("--------------------");
+output("");
+
+output("4. List Concatenation and Repetition:");
+auto list_a = [1, 2];
+auto list_b = ["a", "b"];
+auto concatenated_list = list_a + list_b;
+auto msg4_1 = "   Concatenated ([1,2] + [\"a\",\"b\"]): #{concatenated_list}";
+output(msg4_1);
+
+auto repeated_list = ["echo"] * 3;
+auto msg4_2 = "   Repeated ([\"echo\"] * 3): #{repeated_list}";
+output(msg4_2);
+output("--------------------");
+output("");
+
+output("5. std:list Module Function Examples:");
+
+output("   5a. list_utils.append():");
+auto original_for_append = [100, 200];
+auto list_after_append = list_utils.append(original_for_append, 300);
+auto msg5a = "      Original: #{original_for_append}, After append(300): #{list_after_append}";
+output(msg5a);
+output("");
+
+output("   5b. list_utils.prepend():");
+auto original_for_prepend = [100, 200];
+auto list_after_prepend = list_utils.prepend(original_for_prepend, 50);
+auto msg5b = "      Original: #{original_for_prepend}, After prepend(50): #{list_after_prepend}";
+output(msg5b);
+output("");
+
+output("   5c. list_utils.is_empty():");
+auto is_empty_res1 = list_utils.is_empty([]);
+auto msg5c1 = "      Is [] empty? #{is_empty_res1}";
+output(msg5c1);
+auto is_empty_res2 = list_utils.is_empty([1,2]);
+auto msg5c2 = "      Is [1,2] empty? #{is_empty_res2}";
+output(msg5c2);
+output("");
+
+output("   5d. list_utils.slice():");
+auto list_to_slice = [0, 1, 2, 3, 4, 5, 6];
+auto msg5d_orig = "      Original for slice: #{list_to_slice}";
+output(msg5d_orig);
+
+auto slice_res1 = list_utils.slice(list_to_slice, 1, 4);
+auto msg5d1 = "      Slice(1, 4) [elements at index 1,2,3]: #{slice_res1}";
+output(msg5d1);
+
+auto slice_res2 = list_utils.slice(list_to_slice, 3);
+auto msg5d2 = "      Slice(3) [elements from index 3 to end]: #{slice_res2}";
+output(msg5d2);
+
+auto slice_res3 = list_utils.slice(list_to_slice, 0, len(list_to_slice) - 1);
+auto msg5d3 = "      Slice(0, len-1) [all but last]: #{slice_res3}";
+output(msg5d3);
+
+auto slice_res4 = list_utils.slice(list_to_slice, -3);
+auto msg5d4 = "      Slice(-3) [last 3 elements]: #{slice_res4}";
+output(msg5d4);
+
+auto slice_res5 = list_utils.slice(list_to_slice, 2, -2);
+auto msg5d5 = "      Slice(2, -2) [index 2 up to 2nd from end]: #{slice_res5}";
+output(msg5d5);
+output("");
+
+output("   5e. list_utils.join():");
+auto string_list_to_join = ["Nyx", "is", "a", "scripting", "language"];
+auto joined_str1 = list_utils.join(string_list_to_join, " ");
+auto msg5e1 = "      Joining with ' ': '#{joined_str1}'";
+output(msg5e1);
+
+auto number_list_to_join = [2024, 5, 27];
+auto joined_str2 = list_utils.join(number_list_to_join, "-");
+auto msg5e2 = "      Joining numbers with '-': '#{joined_str2}'";
+output(msg5e2);
+
+auto list_for_join3 = ["N","y","x"];
+auto joined_str3 = list_utils.join(list_for_join3);
+auto msg5e3 = "      Joining without separator: '#{joined_str3}'";
+output(msg5e3);
+output("");
+
+output("   5f. list_utils.each():");
+func print_element_loudly(element) = {
+    auto msg_each_item = "      Item from each: *** #{element} ***";
+    output(msg_each_item);
+}
+auto list_for_each_demo = ["apple", "banana", "cherry"];
+list_utils.each(list_for_each_demo, print_element_loudly);
+output("");
+
+output("--- End of Nyx List Examples ---");

@@ -1,0 +1,121 @@
+import "std:io" as io;
+
+output("--- Nyx std:io Module Examples ---");
+output("");
+
+// +--------------------------+
+// | 1. io.print              |
+// +--------------------------+
+output("1. Demonstrating io.print():");
+io.print("Hello from io.print!", "This is argument 2.", 12345, true, nyx_null);
+io.print("This line will be printed.", "And this part too, on the same line output by io.print (before its final newline).");
+output("--------------------");
+output("");
+
+// +--------------------------+
+// | 2. io.input              |
+// +--------------------------+
+output("2. Demonstrating io.input():");
+output("You will be prompted for your name below.");
+auto user_name = io.input("Please enter your name: ");
+
+if (user_name == nyx_null) {
+    io.print("No input received (EOF detected).");
+} else if (len(user_name) == 0) {
+    io.print("No name entered (empty line).");
+} else {
+    io.print("Hello, #{user_name}! Welcome to Nyx.");
+}
+output("--------------------");
+output("");
+
+// +--------------------------+
+// | 3. File Operations       |
+// +--------------------------+
+output("3. Demonstrating File Operations:");
+auto test_filename = "nyx_io_test_file.txt";
+auto initial_content = "This is the first line written by Nyx.\\nThis is the second line.\\n";
+auto appended_text = "This line was appended.\\nAnd another appended line.";
+
+// 3a. io.writeFile
+output("   Attempting to write to file: '#{test_filename}'");
+auto write_result = io.writeFile(test_filename, initial_content);
+if (write_result) {
+    output("   io.writeFile reported success.");
+} else {
+    output("   io.writeFile reported failure or returned a non-true value.");
+}
+output("");
+
+// 3b. io.fileExists
+output("   Checking if '#{test_filename}' exists after writing:");
+if (io.fileExists(test_filename)) {
+    output("   File '#{test_filename}' exists. (Correct!)");
+} else {
+    output("   ERROR: File '#{test_filename}' does NOT exist after writing!");
+}
+output("");
+
+// 3c. io.readFile
+output("   Reading content from '#{test_filename}':");
+if (io.fileExists(test_filename)) {
+    auto content_v1 = io.readFile(test_filename);
+    output("   --- File Content (v1) Start ---");
+    put(content_v1); // Use put to display raw content
+    output("--- File Content (V1) End ---");
+} else {
+    output("   File not found, cannot read.");
+}
+output("");
+
+// 3d. io.appendFile
+output("   Attempting to append to file: '#{test_filename}'");
+if (io.fileExists(test_filename)) {
+    auto append_result = io.appendFile(test_filename, appended_text);
+    if (append_result) {
+        output("   io.appendFile reported success.");
+    } else {
+        output("   io.appendFile reported failure or returned a non-true value.");
+    }
+} else {
+    output("   File '#{test_filename}' not found, cannot append.");
+}
+output("");
+
+// 3e. io.readFile (again)
+output("   Reading content again from '#{test_filename}' after append:");
+if (io.fileExists(test_filename)) {
+    auto content_v2 = io.readFile(test_filename);
+    output("   --- File Content (v2) Start ---");
+    put(content_v2);
+    output("--- File Content (v2) End ---");
+} else {
+    output("   File not found, cannot read.");
+}
+output("");
+
+// 3f. io.deleteFile
+output("   Attempting to delete file: '#{test_filename}'");
+if (io.fileExists(test_filename)) {
+    auto delete_result = io.deleteFile(test_filename);
+    if (delete_result) {
+        output("   io.deleteFile reported success.");
+    } else {
+        output("   io.deleteFile reported failure or returned false (file might still exist).");
+    }
+} else {
+    output("   File '#{test_filename}' did not exist before attempting delete.");
+}
+output("");
+
+// 3g. io.fileExists (final check)
+output("   Final check if '#{test_filename}' exists:");
+if (io.fileExists(test_filename)) {
+    output("   ERROR: File '#{test_filename}' STILL exists after deletion!");
+} else {
+    output("   File '#{test_filename}' correctly does not exist. (Correct!)");
+}
+output("--------------------");
+output("");
+
+output("--- End of std:io Module Examples ---");

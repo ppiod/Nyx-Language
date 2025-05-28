@@ -1,0 +1,59 @@
+// Function to print a pyramid of stars
+func pyramid(n) = { // n defines the number of rows (height) of the pyramid
+
+  // Outer loop: iterates for each row of the pyramid
+  // i goes from 1 (top row) up to n (base row)
+  for (auto i = 1; i <= n; i++) {
+
+    // Inner loop 1: Print leading spaces for the current row
+    // This loop centers the stars by printing (n - i) spaces.
+    // As 'i' (current row number) increases, the number of spaces decreases.
+    for (auto j = 0; j < (n - i); j++) {
+      put(" "); // 'put' prints without adding a newline character
+    }
+    
+    // Inner loop 2: Print the stars for the current row
+    // Each row 'i' has (2 * i - 1) stars.
+    // Row 1: 2*1-1 = 1 star
+    // Row 2: 2*2-1 = 3 stars
+    // Row 3: 2*3-1 = 5 stars, and so on.
+    for (auto k = 0; k < (2 * i - 1); k++) {
+      put("*"); // Print a star
+    }
+    
+    // After printing all stars and spaces for the current row,
+    // move to the next line to start the next row of the pyramid.
+    output(""); // 'output' with an empty string prints a newline
+  }
+}
+
+// Call the pyramid function with n=5 to print a 5-row pyramid
+output("--- Pyramid Example (height 5) ---");
+pyramid(5);
+output("---------------------------------");
+output(""); // Add some spacing
+
+// --- Infinite Loop Example ---
+output("--- Infinite Loop Example ---");
+output("The following loop will run indefinitely.");
+output("You will need to manually stop the script (e.g., by pressing Ctrl+C in the terminal).");
+output("Press Enter to start the infinite loop (or Ctrl+C now to skip).");
+
+auto counter = 0;
+for (;;) { // An empty condition in a for loop creates an infinite loop
+           // Alternatively, for(;true;) would also work.
+    
+    put("Loop iteration: #{counter} \r"); // Print counter and use carriage return
+
+    counter++; // Increment the counter
+
+    // If you wanted a way to break out of this loop programmatically,
+    // you could add a condition, for example:
+    // if (counter > 1000000) {
+    //   output(""); // Print a newline before breaking
+    //   output("Infinite loop's 'break' condition met.");
+    //   break; 
+    // }
+}
+
+output("Infinite loop finished (only if a break was added and met).");

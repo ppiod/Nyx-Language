@@ -1,0 +1,5 @@
+import "./math.nyx" as math;
+
+auto res = math.add(10, 30); // Imported from "math"
+
+output("Result: #{res}");

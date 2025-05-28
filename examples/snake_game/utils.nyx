@@ -1,0 +1,34 @@
+import "std:list" as list_utils;
+
+func generate_food_position(snake_body_list, score_value, tick_count, board_width_in_cells, board_height_in_cells) = {
+    auto is_food_placed = false;
+    auto food_x = (score_value * 13 + tick_count * 3 + 7) % board_width_in_cells;
+    auto food_y = (score_value * 17 + tick_count * 5 + 11) % board_height_in_cells;
+    
+    auto search_start_x = food_x;
+    auto search_start_y = food_y;
+
+    for (auto search_attempt_count = 0; search_attempt_count < (board_width_in_cells * board_height_in_cells); search_attempt_count++) {
+        auto collides_with_snake = false;
+        for (auto segment_index = 0; segment_index < len(snake_body_list); segment_index++) {
+            auto current_segment = snake_body_list[segment_index];
+            if (current_segment[0] == food_x and current_segment[1] == food_y) {
+                collides_with_snake = true;
+                break;
+            }
+        }
+
+        if (!collides_with_snake) {
+            return [food_x, food_y];
+        }
+
+        food_x = (food_x + 1) % board_width_in_cells;
+        if (food_x == search_start_x) {
+            food_y = (food_y + 1) % board_height_in_cells;
+            if (food_y == search_start_y) {
+            }
+        }
+    }
+    
+    return [0, 0]; 
+}

@@ -1,0 +1,162 @@
+// Import standard library modules that will be used in examples
+import "std:list" as list_utils; 
+import "std:type" as type_utils; 
+
+// --- Basic Functions (from your initial example) ---
+
+// Defines a function 'add' that takes two parameters, n and y
+func add(n, y) = {
+    return n + y; // Returns the sum of n and y
+}
+// Calls the 'add' function and prints the result using string interpolation
+output("Add(10, 30) Result: #{add(10, 30)}"); // Expected: 40
+
+// Defines a function 'hello_world' with no parameters
+func hello_world() = {
+    return "Hello World"; // Returns a string literal
+}
+auto greeting_message = hello_world(); // Calls the function and stores the result
+output("hello_world() Result: #{greeting_message}"); // Prints the stored result
+output(""); // Prints an empty line for spacing
+
+// --- More Function Examples ---
+output("--- More Function Examples ---");
+
+// 1. Function with no parameters, returning a fixed list
+func get_default_coordinates() = {
+    return [0, 0, "center"]; // Returns a list containing numbers and a string
+}
+auto coords = get_default_coordinates(); // Call the function
+auto msg_coords = "Default Coords: #{coords}"; // Prepare the output string
+output(msg_coords); // Prints the list
+output("");
+
+// 2. Function with one parameter and conditional logic (if/else if/else)
+func is_positive(number) = {
+    if (number > 0) {
+        return true; // Returns a boolean
+    } else if (number == 0) {
+        return "zero"; // Returns a string, demonstrating functions can return different types
+    } else {
+        return false; // Returns a boolean
+    }
+}
+auto check_num1 = 10;
+auto check_num2 = -5;
+auto check_num3 = 0;
+auto msg_is_pos1 = "Is #{check_num1} positive? #{is_positive(check_num1)}";
+output(msg_is_pos1);
+auto msg_is_pos2 = "Is #{check_num2} positive? #{is_positive(check_num2)}";
+output(msg_is_pos2);
+auto msg_is_pos3 = "Is #{check_num3} positive? #{is_positive(check_num3)}";
+output(msg_is_pos3);
+output("");
+
+// 3. Function with multiple parameters, performing a calculation
+func calculate_rectangle_area(width, height) = {
+    // Example of input validation
+    if (width < 0 or height < 0) {
+        return nyx_null; // Return nyx_null to indicate an invalid operation or input
+    }
+    return width * height; // Return the calculated area
+}
+auto area1 = calculate_rectangle_area(5, 10);
+auto msg_area1 = "Area of 5x10 rectangle: #{area1}";
+output(msg_area1);
+auto area2 = calculate_rectangle_area(7, -3);
+auto msg_area2 = "Area of 7x(-3) rectangle: #{area2}"; // Demonstrates nyx_null in output
+output(msg_area2);
+output("");
+
+// 4. Function using a loop to construct a string
+func repeat_string(text, count) = {
+    if (count < 0) {
+        return "Error: count cannot be negative"; // Return an error message string
+    }
+    auto result = ""; // Initialize an empty string
+    for (auto i = 0; i < count; i++) {
+        result = result + text; // Concatenate the string 'count' times
+    }
+    return result;
+}
+auto repeated_str = repeat_string("Nyx", 3); // Changed variable name for clarity
+auto msg_repeat_str = "Repeat 'Nyx' 3 times: '#{repeated_str}'";
+output(msg_repeat_str);
+auto error_repeat_str = repeat_string("Test", -1); // Changed variable name
+auto msg_error_repeat = "Repeat 'Test' -1 times: '#{error_repeat_str}'";
+output(msg_error_repeat);
+output("");
+
+// 5. Function calling another function defined earlier
+func describe_number(num) = {
+    auto positivity = is_positive(num); // Call the 'is_positive' function
+    return "The number #{num} is #{positivity}."; // Construct and return a descriptive string
+}
+auto description1 = describe_number(77);
+output(description1);
+auto description2 = describe_number(-3);
+output(description2);
+output("");
+
+// 6. Function with no explicit return statement
+// Nyx functions implicitly return nyx_null if no return statement is executed
+func print_info(message) = {
+    auto info_msg = "INFO: #{message}"; // Prepare the message
+    output(info_msg); // Perform an action (side effect)
+    // No 'return' statement here
+}
+auto return_val_from_print_info = print_info("Nyx is running."); // Call the function
+auto msg_return_print_info = "Return value from print_info: #{return_val_from_print_info}";
+output(msg_return_print_info); // This will show 'null'
+output("");
+
+// 7. Recursive function example: calculating factorial
+func factorial(n) = {
+    if (n < 0) {
+        return "Error: Factorial not defined for negative numbers";
+    }
+    // Base cases for the recursion
+    if (n == 0 or n == 1) {
+        return 1;
+    } else {
+        // Recursive step: n * factorial(n-1)
+        return n * factorial(n - 1); 
+    }
+}
+auto fact5 = factorial(5);
+auto msg_fact5 = "Factorial of 5: #{fact5}";
+output(msg_fact5);
+auto fact0 = factorial(0);
+auto msg_fact0 = "Factorial of 0: #{fact0}";
+output(msg_fact0);
+auto fact_neg = factorial(-2);
+auto msg_fact_neg = "Factorial of -2: #{fact_neg}";
+output(msg_fact_neg);
+output("");
+
+// 8. Function operating on a list, using std:list and std:type modules, and returning a new list
+func square_list_elements(numbers_input_list) = {
+    auto squared_list_result = []; // Initialize an empty list for results
+    for(auto i = 0; i < len(numbers_input_list); i++) {
+        auto item = numbers_input_list[i];
+        // Use type_utils.getType() to check the type of the item
+        if (type_utils.getType(item) == "NUMBER") { 
+            squared_list_result = list_utils.append(squared_list_result, item * item);
+        } else {
+            // If item is not a number, append nyx_null to the result list
+            squared_list_result = list_utils.append(squared_list_result, nyx_null); 
+        }
+    }
+    return squared_list_result; // Return the new list with squared numbers (or nulls)
+}
+
+auto my_numbers_list = [1, 2, 3, "text", 4];
+auto result_squared_numbers = square_list_elements(my_numbers_list);
+
+auto msg_original_list = "Original list: #{my_numbers_list}";
+output(msg_original_list);
+auto msg_squared_list = "Squared list (non-numbers become null): #{result_squared_numbers}";
+output(msg_squared_list);
+output("");
+
+output("--- End of More Function Examples ---");
