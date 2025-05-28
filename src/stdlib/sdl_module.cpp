@@ -276,22 +276,35 @@ NyxValue native_sdl_pollEvent(Interpreter& interpreter, const std::vector<NyxVal
     SDL_Event event;
     if (SDL_PollEvent(&event)) {
         NyxList event_data_list;
-        event_data_list.push_back(NyxValue(static_cast<double>(event.type)));
+        event_data_list.push_back(NyxValue(static_cast<double>(event.type))); // e[0] = eventType
 
         switch (event.type) {
             case SDL_QUIT:
                 break;
             case SDL_KEYDOWN:
             case SDL_KEYUP:
-                event_data_list.push_back(NyxValue(static_cast<double>(event.key.keysym.sym)));
-                event_data_list.push_back(NyxValue(static_cast<double>(event.key.keysym.scancode)));
-                event_data_list.push_back(NyxValue(static_cast<double>(event.key.keysym.mod)));
-                event_data_list.push_back(NyxValue(static_cast<bool>(event.key.repeat != 0)));
+                event_data_list.push_back(NyxValue(static_cast<double>(event.key.keysym.sym)));    // e[1] = keyCode
+                event_data_list.push_back(NyxValue(static_cast<double>(event.key.keysym.scancode))); // e[2] = scancode
+                event_data_list.push_back(NyxValue(static_cast<double>(event.key.keysym.mod)));    // e[3] = keyModifier
+                event_data_list.push_back(NyxValue(static_cast<bool>(event.key.repeat != 0)));   // e[4] = isRepeat
+                break;
+            case SDL_MOUSEBUTTONDOWN:
+            case SDL_MOUSEBUTTONUP:
+                event_data_list.push_back(NyxValue(static_cast<double>(event.button.button))); // e[1] = button
+                event_data_list.push_back(NyxValue(static_cast<double>(event.button.x)));      // e[2] = mouse_x
+                event_data_list.push_back(NyxValue(static_cast<double>(event.button.y)));      // e[3] = mouse_y
+                event_data_list.push_back(NyxValue(static_cast<double>(event.button.clicks))); // e[4] = 1 for single-click, 2 for double-click
+                break;
+            case SDL_MOUSEMOTION:
+                event_data_list.push_back(NyxValue(static_cast<double>(event.motion.x)));      // e[1] = mouse_x
+                event_data_list.push_back(NyxValue(static_cast<double>(event.motion.y)));      // e[2] = mouse_y
+                event_data_list.push_back(NyxValue(static_cast<double>(event.motion.xrel)));   // e[3] = relative_x
+                event_data_list.push_back(NyxValue(static_cast<double>(event.motion.yrel)));   // e[4] = relative_y
                 break;
         }
-        return NyxValue(event_data_list);
+        return NyxValue(event_data_list); 
     }
-    return NyxValue(std::monostate{});
+    return NyxValue(std::monostate{}); 
 }
 
 NyxValue native_sdl_ttf_init(Interpreter& interpreter, const std::vector<NyxValue>& args) {
