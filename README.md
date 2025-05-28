@@ -3,7 +3,7 @@ Nyx is a lightweight, dynamically-typed scripting language designed for simplici
 
 ## Prerequisites
 
-* **Xmake**: A C/C++ cross-platform build system. (See [xmake.io](https://xmake.io))
+* **Xmake**: A C/C++ build system. (See [xmake.io](https://xmake.io))
 * **C++17 Compiler**: Such as GCC, Clang, or MSVC.
 * **SDL2 Libraries (Optional, for `std:sdl` module)**:
     * SDL2 (version >=2.0.12)
