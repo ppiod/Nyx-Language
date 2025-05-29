@@ -7,6 +7,7 @@
 #include "./sdl_module.h"
 #include "./string_module.h"
 #include "./type_utils_module.h"
+#include "./math_module.h"
 
 namespace Nyx {
 
@@ -17,6 +18,7 @@ void registerNyxStandardLibrary(Interpreter& interpreter) {
     registerStdSdlModule(interpreter);
     registerStdStringModule(interpreter);
     registerStdTypeUtilsModule(interpreter);
+    registerStdMathModule(interpreter);
 }
 
 }

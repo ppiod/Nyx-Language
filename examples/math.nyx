@@ -1,0 +1,39 @@
+import "std:math" as math;
+
+output("PI: #{math.PI}");
+output("E: #{math.E}");
+output("");
+
+output("abs(-5.5): #{math.abs(-5.5)}");       // 5.5
+output("floor(3.7): #{math.floor(3.7)}");     // 3
+output("ceil(3.2): #{math.ceil(3.2)}");       // 4
+output("round(3.5): #{math.round(3.5)}");     // 4
+output("round(3.49): #{math.round(3.49)}");   // 3
+output("trunc(3.7): #{math.trunc(3.7)}");     // 3
+output("trunc(-3.7): #{math.trunc(-3.7)}");   // -3
+output("");
+
+output("sqrt(16): #{math.sqrt(16)}");         // 4
+output("pow(2, 8): #{math.pow(2, 8)}");         // 256
+output("");
+
+auto angle_rad = math.PI / 2.0; // 90 degrees
+output("sin(PI/2): #{math.sin(angle_rad)}");   // ~1.0
+output("cos(PI): #{math.cos(math.PI)}");     // -1.0
+output("degrees(PI): #{math.degrees(math.PI)}"); // 180
+output("radians(180): #{math.radians(180)}"); // ~PI
+output("");
+
+output("log(math.E): #{math.log(math.E)}");     // 1 (natural log)
+output("log10(100): #{math.log10(100)}");   // 2
+output("exp(1): #{math.exp(1)}");           // ~E (2.718...)
+output("");
+
+output("min(10, 20): #{math.min(10, 20)}");     // 10
+output("max(10, 20): #{math.max(10, 20)}");     // 20
+output("");
+
+output("Random (0-1): #{math.random()}");
+output("Random (0-1): #{math.random()}");
+output("RandomInt(1, 6): #{math.randomInt(1, 6)}");
+output("RandomInt(10, 15): #{math.randomInt(10, 15)}");
