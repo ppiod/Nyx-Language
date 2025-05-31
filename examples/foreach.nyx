@@ -1,0 +1,17 @@
+auto list = [10, 20, 30, "hello"];
+
+foreach (auto item : list) {
+    output(item);
+    if (item == 20) {
+        output("Found 20, continuing...");
+        continue;
+    }
+    if (item == "hello") {
+        output("Found hello, stopping.");
+        break;
+    }
+}
+
+foreach (auto fruit : ["Apple", "Banana", "Cherry"]) {
+    output("Fruit: #{fruit}");
+}

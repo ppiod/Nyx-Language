@@ -24,6 +24,7 @@ Tokenizer::Tokenizer(std::string source) : source_code(std::move(source)) {
     keywords["return"] = TokenType::KEYWORD_RETURN;
     keywords["import"] = TokenType::KEYWORD_IMPORT;
     keywords["as"] = TokenType::KEYWORD_AS;
+    keywords["foreach"] = TokenType::KEYWORD_FOREACH;
 }
 
 char Tokenizer::peek() {

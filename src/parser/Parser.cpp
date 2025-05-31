@@ -86,13 +86,15 @@ std::unique_ptr<Statement> Parser::declaration() {
     return statement();
 }
 
-
 std::unique_ptr<Statement> Parser::statement() {
     if (check(TokenType::KEYWORD_IF)) {
         return ifStatement();
     }
     if (check(TokenType::KEYWORD_FOR)) {
         return forStatement();
+    }
+    if (check(TokenType::KEYWORD_FOREACH)) {
+        return foreachStatement();
     }
      if (check(TokenType::KEYWORD_BREAK)) {
         return breakStatement();
@@ -210,7 +212,7 @@ std::unique_ptr<Statement> Parser::typedefStatement() {
 }
 
 std::unique_ptr<Statement> Parser::ifStatement() {
-    consume(TokenType::KEYWORD_IF, "Expected 'if'.");
+    Token if_keyword_token = consume(TokenType::KEYWORD_IF, "Expected 'if'.");
     consume(TokenType::LEFT_PAREN, "Expected '(' after 'if'.");
     std::unique_ptr<Expression> condition = expression();
     consume(TokenType::RIGHT_PAREN, "Expected ')' after if condition.");
@@ -232,7 +234,7 @@ std::unique_ptr<Statement> Parser::ifStatement() {
 }
 
 std::unique_ptr<Statement> Parser::forStatement() {
-    consume(TokenType::KEYWORD_FOR, "Expected 'for'.");
+    Token for_keyword_token = consume(TokenType::KEYWORD_FOR, "Expected 'for'.");
     consume(TokenType::LEFT_PAREN, "Expected '(' after 'for'.");
 
     std::unique_ptr<Statement> initializer = nullptr;
@@ -261,6 +263,19 @@ std::unique_ptr<Statement> Parser::forStatement() {
     }
 
     return std::make_unique<ForStatement>(std::move(initializer), std::move(condition), std::move(increment), std::move(body));
+}
+
+std::unique_ptr<Statement> Parser::foreachStatement() {
+    Token foreach_keyword_token = consume(TokenType::KEYWORD_FOREACH, "Expected 'foreach'.");
+    consume(TokenType::LEFT_PAREN, "Expected '(' after 'foreach' keyword.");
+    consume(TokenType::KEYWORD_AUTO, "Expected 'auto' for loop variable declaration in foreach.");
+    Token loop_variable = consume(TokenType::IDENTIFIER, "Expected variable name after 'auto' in foreach.");
+    consume(TokenType::COLON, "Expected ':' after loop variable in foreach.");
+    std::unique_ptr<Expression> iterable = expression();
+    consume(TokenType::RIGHT_PAREN, "Expected ')' after foreach iterable expression.");
+    std::unique_ptr<Statement> body = statement();
+
+    return std::make_unique<ForeachStatement>(foreach_keyword_token, loop_variable, std::move(iterable), std::move(body));
 }
 
 std::unique_ptr<Statement> Parser::breakStatement() {

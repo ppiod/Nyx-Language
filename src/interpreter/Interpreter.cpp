@@ -323,6 +323,41 @@ void Interpreter::visitForStatement(const ForStatement& stmt) {
     this->environment = previous_scope;
 }
 
+void Interpreter::visitForeachStatement(const ForeachStatement& stmt) {
+    NyxValue iterable_value = evaluate(*stmt.iterable_expression);
+
+    if (!std::holds_alternative<NyxList>(iterable_value.data)) {
+        throw Common::NyxRuntimeException("Foreach loop requires a list as iterable.", stmt.iterable_expression->token.line);
+    }
+
+    const NyxList& list_data = std::get<NyxList>(iterable_value.data);
+
+    for (const NyxValue& item_in_list : list_data) {
+        std::shared_ptr<Environment> loop_iteration_env = std::make_shared<Environment>(environment);
+        
+        NyxValue loop_var_value = item_in_list;
+
+
+        loop_iteration_env->define(stmt.loop_variable_token.lexeme, loop_var_value);
+        
+        std::shared_ptr<Environment> previous_env = environment;
+        environment = loop_iteration_env;
+
+        try {
+            execute(*stmt.body_statement);
+        } catch (const Common::NyxBreakSignal&) {
+            environment = previous_env; 
+            break; 
+        } catch (const Common::NyxContinueSignal&) {
+            environment = previous_env; 
+        } catch (...) {
+            environment = previous_env; 
+            throw;
+        }
+        environment = previous_env; 
+    }
+}
+
 void Interpreter::visitBreakStatement(const BreakStatement& stmt) {
     throw Common::NyxBreakSignal();
 }

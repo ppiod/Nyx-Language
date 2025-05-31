@@ -209,6 +209,22 @@ struct ForStatement : public Statement {
     void accept(StatementVisitor& visitor) const override;
 };
 
+struct ForeachStatement : public Statement {
+    Token foreach_token;
+    Token loop_variable_token;
+    std::unique_ptr<Expression> iterable_expression;
+    std::unique_ptr<Statement> body_statement;
+
+    ForeachStatement(Token ft, Token lvt, std::unique_ptr<Expression> iterable, std::unique_ptr<Statement> body)
+        : foreach_token(std::move(ft)), 
+          loop_variable_token(std::move(lvt)),
+          iterable_expression(std::move(iterable)),
+          body_statement(std::move(body)) {
+    }
+
+    void accept(StatementVisitor& visitor) const override;
+};
+
 struct BreakStatement : public Statement {
     Token keyword_break;
     explicit BreakStatement(Token kw) : keyword_break(std::move(kw)) {}
@@ -252,6 +268,7 @@ public:
     virtual void visitTypedefStatement(const TypedefStatement& stmt) = 0;
     virtual void visitIfStatement(const IfStatement& stmt) = 0;
     virtual void visitForStatement(const ForStatement& stmt) = 0;
+    virtual void visitForeachStatement(const ForeachStatement& stmt) = 0;
     virtual void visitBreakStatement(const BreakStatement& stmt) = 0;
     virtual void visitContinueStatement(const ContinueStatement& stmt) = 0;
 };
@@ -280,6 +297,7 @@ inline void ImportStatement::accept(StatementVisitor& visitor) const { visitor.v
 inline void TypedefStatement::accept(StatementVisitor& visitor) const { visitor.visitTypedefStatement(*this); }
 inline void IfStatement::accept(StatementVisitor& visitor) const { visitor.visitIfStatement(*this); }
 inline void ForStatement::accept(StatementVisitor& visitor) const { visitor.visitForStatement(*this); }
+inline void ForeachStatement::accept(StatementVisitor& visitor) const { visitor.visitForeachStatement(*this); }
 inline void BreakStatement::accept(StatementVisitor& visitor) const { visitor.visitBreakStatement(*this); }
 inline void ContinueStatement::accept(StatementVisitor& visitor) const { visitor.visitContinueStatement(*this); }
 

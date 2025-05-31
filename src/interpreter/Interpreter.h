@@ -65,6 +65,7 @@ public:
     void visitTypedefStatement(const TypedefStatement& stmt) override;
     void visitIfStatement(const IfStatement& stmt) override;
     void visitForStatement(const ForStatement& stmt) override;
+    void visitForeachStatement(const ForeachStatement& stmt) override;
     void visitBreakStatement(const BreakStatement& stmt) override;
     void visitContinueStatement(const ContinueStatement& stmt) override;
 

@@ -24,6 +24,7 @@ enum class TokenType {
     KEYWORD_RETURN,     // return
     KEYWORD_IMPORT,     // import
     KEYWORD_AS,         // as
+    KEYWORD_FOREACH,    // foreach
 
     // Literals & Identifiers
     IDENTIFIER,         // variable_name, function_name
