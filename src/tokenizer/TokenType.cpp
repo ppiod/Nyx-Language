@@ -24,6 +24,9 @@ std::string tokenTypeToString(TokenType type) {
         case TokenType::KEYWORD_IMPORT:     return "KEYWORD_IMPORT";
         case TokenType::KEYWORD_AS:         return "KEYWORD_AS";
         case TokenType::KEYWORD_FOREACH:    return "KEYWORD_FOREACH";
+        case TokenType::KEYWORD_SWITCH:     return "KEYWORD_SWITCH";
+        case TokenType::KEYWORD_CASE:       return "KEYWORD_CASE";
+        case TokenType::KEYWORD_DEFAULT:    return "KEYWORD_DEFAULT";
         case TokenType::IDENTIFIER:         return "IDENTIFIER";
         case TokenType::STRING_LITERAL:     return "STRING_LITERAL";
         case TokenType::NUMBER_LITERAL:     return "NUMBER_LITERAL";

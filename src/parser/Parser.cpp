@@ -87,36 +87,18 @@ std::unique_ptr<Statement> Parser::declaration() {
 }
 
 std::unique_ptr<Statement> Parser::statement() {
-    if (check(TokenType::KEYWORD_IF)) {
-        return ifStatement();
-    }
-    if (check(TokenType::KEYWORD_FOR)) {
-        return forStatement();
-    }
-    if (check(TokenType::KEYWORD_FOREACH)) {
-        return foreachStatement();
-    }
-     if (check(TokenType::KEYWORD_BREAK)) {
-        return breakStatement();
-    }
-    if (check(TokenType::KEYWORD_CONTINUE)) {
-        return continueStatement();
-    }
-    if (check(TokenType::KEYWORD_RETURN)) {
-        return returnStatement();
-    }
-    if (check(TokenType::LEFT_BRACE)) {
-        return blockStatement();
-    }
-    if (check(TokenType::KEYWORD_OUTPUT)) {
-        return outputStatement();
-    }
-    if (check(TokenType::KEYWORD_PUT)) {
-        return putStatement();
-    }
-    if (check(TokenType::KEYWORD_AT_TYPEDEF)) {
-        return typedefStatement();
-    }
+    if (check(TokenType::KEYWORD_IF)) return ifStatement();
+    if (check(TokenType::KEYWORD_FOR)) return forStatement();
+    if (check(TokenType::KEYWORD_FOREACH)) return foreachStatement();
+    if (check(TokenType::KEYWORD_SWITCH)) return switchStatement();
+    if (check(TokenType::KEYWORD_BREAK)) return breakStatement();
+    if (check(TokenType::KEYWORD_CONTINUE)) return continueStatement();
+    if (check(TokenType::KEYWORD_RETURN)) return returnStatement();
+    if (check(TokenType::LEFT_BRACE)) return blockStatement();
+    if (check(TokenType::KEYWORD_OUTPUT)) return outputStatement();
+    if (check(TokenType::KEYWORD_PUT)) return putStatement();
+    if (check(TokenType::KEYWORD_AT_TYPEDEF)) return typedefStatement();
+    
     return expressionStatement();
 }
 
@@ -165,7 +147,6 @@ std::unique_ptr<Statement> Parser::returnStatement() {
     consume(TokenType::SEMICOLON, "Expected ';' after return value.");
     return std::make_unique<ReturnStatement>(keyword, std::move(value));
 }
-
 
 std::unique_ptr<VariableDeclarationStatement> Parser::parseVariableDeclaration(bool consume_trailing_semicolon) {
     Token auto_kw = consume(TokenType::KEYWORD_AUTO, "Expected 'auto'.");
@@ -276,6 +257,49 @@ std::unique_ptr<Statement> Parser::foreachStatement() {
     std::unique_ptr<Statement> body = statement();
 
     return std::make_unique<ForeachStatement>(foreach_keyword_token, loop_variable, std::move(iterable), std::move(body));
+}
+
+std::unique_ptr<Statement> Parser::switchStatement() {
+    Token switch_tok = consume(TokenType::KEYWORD_SWITCH, "Expected 'switch'.");
+    consume(TokenType::LEFT_PAREN, "Expected '(' after 'switch'.");
+    std::unique_ptr<Expression> condition = expression();
+    consume(TokenType::RIGHT_PAREN, "Expected ')' after switch condition.");
+    consume(TokenType::LEFT_BRACE, "Expected '{' after switch condition ')'.");
+
+    std::vector<CaseBlock> case_blocks;
+    bool default_found = false;
+
+    while (!check(TokenType::RIGHT_BRACE) && !isAtEnd()) {
+        Token case_or_default_tok = peek();
+        std::unique_ptr<Expression> case_expr = nullptr;
+        bool is_default_case = false;
+
+        if (match({TokenType::KEYWORD_CASE})) {
+            case_or_default_tok = previous();
+            case_expr = expression();
+            consume(TokenType::COLON, "Expected ':' after case value.");
+        } else if (match({TokenType::KEYWORD_DEFAULT})) {
+            if (default_found) {
+                throw Common::NyxParserException("Multiple default cases in switch statement.", previous().line);
+            }
+            case_or_default_tok = previous();
+            is_default_case = true;
+            default_found = true;
+            consume(TokenType::COLON, "Expected ':' after 'default' keyword.");
+        } else {
+            throw Common::NyxParserException("Expected 'case' or 'default' inside switch block.", peek().line);
+        }
+
+        std::vector<std::unique_ptr<Statement>> statements_in_case;
+        while (!isAtEnd() && !check(TokenType::RIGHT_BRACE) && 
+               !check(TokenType::KEYWORD_CASE) && !check(TokenType::KEYWORD_DEFAULT)) {
+            statements_in_case.push_back(statement());
+        }
+        case_blocks.emplace_back(case_or_default_tok, std::move(case_expr), std::move(statements_in_case), is_default_case);
+    }
+
+    Token right_brace_tok = consume(TokenType::RIGHT_BRACE, "Expected '}' to close switch block.");
+    return std::make_unique<SwitchStatement>(switch_tok, std::move(condition), std::move(case_blocks), right_brace_tok);
 }
 
 std::unique_ptr<Statement> Parser::breakStatement() {
@@ -506,7 +530,6 @@ std::vector<std::variant<std::string, std::unique_ptr<Expression>>> Parser::pars
     current_line_for_sub_parsing = 0;
     return segments;
 }
-
 
 std::unique_ptr<Expression> Parser::primary() {
     if (match({TokenType::KEYWORD_FALSE})) {

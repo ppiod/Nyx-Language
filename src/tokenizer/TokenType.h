@@ -25,6 +25,9 @@ enum class TokenType {
     KEYWORD_IMPORT,     // import
     KEYWORD_AS,         // as
     KEYWORD_FOREACH,    // foreach
+    KEYWORD_SWITCH,     // switch
+    KEYWORD_CASE,       // case
+    KEYWORD_DEFAULT,    // default
 
     // Literals & Identifiers
     IDENTIFIER,         // variable_name, function_name

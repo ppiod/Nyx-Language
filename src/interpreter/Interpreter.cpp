@@ -31,7 +31,6 @@ void Interpreter::registerNativeModule(const std::string& name, NativeModuleBuil
     native_module_builders[name] = builder;
 }
 
-
 NyxValue Interpreter::evaluate(const Expression& expr) {
     return expr.accept(*this);
 }
@@ -263,7 +262,6 @@ void Interpreter::visitImportStatement(const ImportStatement& stmt) {
     environment->define(stmt.alias_name.lexeme, module_value);
 }
 
-
 void Interpreter::visitTypedefStatement(const TypedefStatement& stmt) {
     NyxValue value_to_check = evaluate(*stmt.expression_to_check);
     std::cout << nyxValueTypeToString(value_to_check) << std::endl;
@@ -358,6 +356,65 @@ void Interpreter::visitForeachStatement(const ForeachStatement& stmt) {
     }
 }
 
+void Interpreter::visitSwitchStatement(const SwitchStatement& stmt) {
+    NyxValue condition_value = evaluate(*stmt.condition);
+    int matched_case_index = -1;
+    int default_case_index = -1;
+
+    for (size_t i = 0; i < stmt.cases.size(); ++i) {
+        const auto& case_block = stmt.cases[i];
+        if (case_block.is_default) {
+            default_case_index = static_cast<int>(i);
+        } else {
+            NyxValue case_expr_value = evaluate(*case_block.value_expression);
+            if (isEqual(condition_value, case_expr_value)) {
+                matched_case_index = static_cast<int>(i);
+                break;
+            }
+        }
+    }
+
+    int start_execution_from_index = -1;
+    if (matched_case_index != -1) {
+        start_execution_from_index = matched_case_index;
+    } else if (default_case_index != -1) {
+        start_execution_from_index = default_case_index;
+    }
+
+    if (start_execution_from_index != -1) {
+        for (size_t i = static_cast<size_t>(start_execution_from_index); i < stmt.cases.size(); ++i) {
+            const auto& case_to_execute = stmt.cases[i];
+
+            std::shared_ptr<Environment> case_env = std::make_shared<Environment>(environment);
+            std::shared_ptr<Environment> previous_env = environment;
+            environment = case_env;
+
+            bool broken_out = false;
+            try {
+                for (const auto& statement_in_case : case_to_execute.statements) {
+                    execute(*statement_in_case);
+                }
+            } catch (const Common::NyxBreakSignal&) {
+                broken_out = true;
+            } catch (const Common::NyxContinueSignal&) {
+                 environment = previous_env;
+                 throw; 
+            } catch (const Common::NyxReturnSignal&) {
+                 environment = previous_env;
+                 throw;
+            } catch (...) {
+                environment = previous_env;
+                throw;
+            }
+            
+            environment = previous_env;
+            if (broken_out) {
+                break;
+            }
+        }
+    }
+}
+
 void Interpreter::visitBreakStatement(const BreakStatement& stmt) {
     throw Common::NyxBreakSignal();
 }
@@ -423,7 +480,6 @@ NyxValue Interpreter::visitAssignmentExpression(const AssignmentExpression& expr
     }
     return value_to_assign;
 }
-
 
 NyxValue Interpreter::visitLiteralExpression(const LiteralExpression& expr) {
     return expr.value;
@@ -491,7 +547,6 @@ NyxValue Interpreter::visitPostfixUpdateExpression(const PostfixUpdateExpression
 
     throw Common::NyxRuntimeException("Operand for '++/--' must be an identifier or list element.", expr.operator_token.line);
 }
-
 
 NyxValue Interpreter::visitUnaryExpression(const UnaryExpression& expr) {
     NyxValue right_value_holder = evaluate(*expr.right);
@@ -799,7 +854,6 @@ NyxValue Interpreter::visitMemberAccessExpression(const MemberAccessExpression& 
     return *member_val;
 }
 
-
 NyxValue Interpreter::executeFunctionBody(const NyxDefinedFunction& function, const std::vector<NyxValue>& arguments) {
     auto func_env = std::make_shared<Environment>(function.closure_environment);
     
@@ -868,7 +922,6 @@ NyxValue Interpreter::interpretModule(const std::string& module_source_code, con
 
     return NyxValue(module_data);
 }
-
 
 void Interpreter::executeProgram(const std::vector<std::unique_ptr<Statement>>& program, std::shared_ptr<Environment> execution_globals, std::shared_ptr<Environment> execution_env) {
     std::shared_ptr<Environment> previous_globals = this->globals;

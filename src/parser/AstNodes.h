@@ -225,6 +225,35 @@ struct ForeachStatement : public Statement {
     void accept(StatementVisitor& visitor) const override;
 };
 
+struct CaseBlock {
+    Token case_or_default_token;
+    std::unique_ptr<Expression> value_expression;
+    std::vector<std::unique_ptr<Statement>> statements;
+    bool is_default;
+
+    CaseBlock(Token token, std::unique_ptr<Expression> expr, std::vector<std::unique_ptr<Statement>> stmts, bool is_def)
+        : case_or_default_token(std::move(token)),
+          value_expression(std::move(expr)),
+          statements(std::move(stmts)),
+          is_default(is_def) {}
+};
+
+struct SwitchStatement : public Statement {
+    Token switch_token;
+    std::unique_ptr<Expression> condition;
+    std::vector<CaseBlock> cases;
+    Token closing_brace_token;
+
+    SwitchStatement(Token sw_token, std::unique_ptr<Expression> cond, std::vector<CaseBlock> case_blocks, Token close_brace)
+        : switch_token(std::move(sw_token)),
+          condition(std::move(cond)),
+          cases(std::move(case_blocks)),
+          closing_brace_token(std::move(close_brace)) {}
+
+    void accept(StatementVisitor& visitor) const override;
+};
+
+
 struct BreakStatement : public Statement {
     Token keyword_break;
     explicit BreakStatement(Token kw) : keyword_break(std::move(kw)) {}
@@ -269,6 +298,7 @@ public:
     virtual void visitIfStatement(const IfStatement& stmt) = 0;
     virtual void visitForStatement(const ForStatement& stmt) = 0;
     virtual void visitForeachStatement(const ForeachStatement& stmt) = 0;
+    virtual void visitSwitchStatement(const SwitchStatement& stmt) = 0;
     virtual void visitBreakStatement(const BreakStatement& stmt) = 0;
     virtual void visitContinueStatement(const ContinueStatement& stmt) = 0;
 };
@@ -298,6 +328,7 @@ inline void TypedefStatement::accept(StatementVisitor& visitor) const { visitor.
 inline void IfStatement::accept(StatementVisitor& visitor) const { visitor.visitIfStatement(*this); }
 inline void ForStatement::accept(StatementVisitor& visitor) const { visitor.visitForStatement(*this); }
 inline void ForeachStatement::accept(StatementVisitor& visitor) const { visitor.visitForeachStatement(*this); }
+inline void SwitchStatement::accept(StatementVisitor& visitor) const { visitor.visitSwitchStatement(*this); }
 inline void BreakStatement::accept(StatementVisitor& visitor) const { visitor.visitBreakStatement(*this); }
 inline void ContinueStatement::accept(StatementVisitor& visitor) const { visitor.visitContinueStatement(*this); }
 

@@ -1,0 +1,14 @@
+auto value = 2;
+switch (value) {
+    case 1:
+        output("It's one!");
+        break;
+    case 2:
+        output("It's two!");
+        break;
+    case 3:
+        output("It's three");
+        break;
+    default:
+        output("It's some other number.");
+}

@@ -12,7 +12,6 @@
 #include "../common/Utils.h"
 namespace Nyx {
 
-
 struct NyxModuleData {
     std::shared_ptr<Environment> environment;
     std::vector<std::unique_ptr<Statement>> ast_holder; 
@@ -44,7 +43,6 @@ public:
     }
 };
 
-
 class Interpreter : public StatementVisitor, public ExpressionVisitor {
 public:
     using NativeModuleBuilder = std::function<std::shared_ptr<Environment>()>;
@@ -66,6 +64,7 @@ public:
     void visitIfStatement(const IfStatement& stmt) override;
     void visitForStatement(const ForStatement& stmt) override;
     void visitForeachStatement(const ForeachStatement& stmt) override;
+    void visitSwitchStatement(const SwitchStatement& stmt) override;
     void visitBreakStatement(const BreakStatement& stmt) override;
     void visitContinueStatement(const ContinueStatement& stmt) override;
 
