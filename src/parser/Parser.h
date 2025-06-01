@@ -42,6 +42,7 @@ private:
     std::unique_ptr<Statement> forStatement();
     std::unique_ptr<Statement> foreachStatement();
     std::unique_ptr<Statement> switchStatement();
+    std::unique_ptr<Statement> structDeclarationStatement();
     std::unique_ptr<Statement> breakStatement();
     std::unique_ptr<Statement> continueStatement();
     std::unique_ptr<Statement> blockStatement();

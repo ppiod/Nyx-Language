@@ -1,0 +1,11 @@
+struct Person {
+    name;
+    email;
+}
+
+auto person = Person{name: "Piod", email: "piod@example.com"};
+
+@Typedef(person); // STRUCT<Person>
+
+output("Name: #{person.name}, Email: #{person.email}");
+output(person); 

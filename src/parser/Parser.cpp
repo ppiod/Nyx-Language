@@ -5,10 +5,11 @@
 #include <string>
 #include <vector>
 #include <variant>
+#include <utility>
 
 namespace Nyx {
 
-Parser::Parser(std::vector<Token> tokens_list) : tokens(std::move(tokens_list)), current_line_for_sub_parsing(0) {}
+Parser::Parser(std::vector<Token> tokens_list) : tokens(std::move(tokens_list)), current(0), current_line_for_sub_parsing(0) {}
 
 bool Parser::isAtEnd() const {
     return peek().type == TokenType::END_OF_FILE;
@@ -18,7 +19,11 @@ Token Parser::peek() const {
     if (current < tokens.size()) {
         return tokens[current];
     }
-    return tokens.back();
+    if (!tokens.empty()) {
+        return tokens.back(); 
+    }
+    static Token dummy_eof_token_static(TokenType::END_OF_FILE, "", 0); 
+    return dummy_eof_token_static;
 }
 
 Token Parser::previous() const {
@@ -28,8 +33,8 @@ Token Parser::previous() const {
     if (!tokens.empty()) {
          return tokens.front();
     }
-    static Token dummy_eof_token(TokenType::END_OF_FILE, "", 0);
-    return dummy_eof_token;
+    static Token dummy_eof_token_static_prev(TokenType::END_OF_FILE, "", 0); 
+    return dummy_eof_token_static_prev;
 }
 
 bool Parser::checkNext(TokenType type) const {
@@ -77,6 +82,9 @@ std::unique_ptr<Statement> Parser::declaration() {
              return functionDeclarationStatement();
         }
     }
+    if (peek().type == TokenType::KEYWORD_STRUCT) {
+        return structDeclarationStatement();
+    }
     if (peek().type == TokenType::KEYWORD_IMPORT) {
         return importStatement();
     }
@@ -100,6 +108,21 @@ std::unique_ptr<Statement> Parser::statement() {
     if (check(TokenType::KEYWORD_AT_TYPEDEF)) return typedefStatement();
     
     return expressionStatement();
+}
+
+std::unique_ptr<Statement> Parser::structDeclarationStatement() {
+    Token struct_token = consume(TokenType::KEYWORD_STRUCT, "Expected 'struct' keyword.");
+    Token name_token = consume(TokenType::IDENTIFIER, "Expected struct name.");
+    consume(TokenType::LEFT_BRACE, "Expected '{' after struct name.");
+
+    std::vector<Token> field_name_tokens;
+    while (!check(TokenType::RIGHT_BRACE) && !isAtEnd()) {
+        field_name_tokens.push_back(consume(TokenType::IDENTIFIER, "Expected field name."));
+        consume(TokenType::SEMICOLON, "Expected ';' after field name.");
+    }
+    consume(TokenType::RIGHT_BRACE, "Expected '}' after struct fields.");
+    
+    return std::make_unique<StructDeclarationStatement>(struct_token, name_token, std::move(field_name_tokens));
 }
 
 std::unique_ptr<FunctionDeclarationStatement> Parser::functionDeclarationStatement() {
@@ -136,7 +159,6 @@ std::unique_ptr<ImportStatement> Parser::importStatement() {
     consume(TokenType::SEMICOLON, "Expected ';' after import statement.");
     return std::make_unique<ImportStatement>(path_literal, alias_name);
 }
-
 
 std::unique_ptr<Statement> Parser::returnStatement() {
     Token keyword = consume(TokenType::KEYWORD_RETURN, "Expected 'return'.");
@@ -427,13 +449,32 @@ std::unique_ptr<Expression> Parser::finishCall(std::unique_ptr<Expression> calle
     return std::make_unique<CallExpression>(std::move(callee), paren, std::move(arguments));
 }
 
-
 std::unique_ptr<Expression> Parser::postfix_operators() {
     std::unique_ptr<Expression> expr = primary();
 
     while (true) {
         if (match({TokenType::LEFT_PAREN})) {
             expr = finishCall(std::move(expr));
+        } else if (check(TokenType::LEFT_BRACE)) {
+            if (auto id_expr = dynamic_cast<IdentifierExpression*>(expr.get())) {
+                advance(); 
+                Token struct_name_token = id_expr->token;
+                
+                std::vector<std::pair<Token, std::unique_ptr<Expression>>> initializers;
+                if (!check(TokenType::RIGHT_BRACE)) {
+                    do {
+                        if (peek().type == TokenType::RIGHT_BRACE) break; 
+                        Token field_name = consume(TokenType::IDENTIFIER, "Expected field name in struct initializer.");
+                        consume(TokenType::COLON, "Expected ':' after field name in struct initializer.");
+                        std::unique_ptr<Expression> field_value = expression();
+                        initializers.emplace_back(std::move(field_name), std::move(field_value));
+                    } while (match({TokenType::COMMA}));
+                }
+                consume(TokenType::RIGHT_BRACE, "Expected '}' to close struct initializer.");
+                expr = std::make_unique<StructInitializerExpression>(struct_name_token, std::move(initializers));
+            } else {
+                break; 
+            }
         } else if (match({TokenType::PLUS_PLUS, TokenType::MINUS_MINUS})) {
             Token operator_token = previous();
             expr = std::make_unique<PostfixUpdateExpression>(std::move(expr), operator_token);
@@ -618,6 +659,7 @@ void Parser::synchronize() {
             case TokenType::KEYWORD_RETURN:
             case TokenType::KEYWORD_BREAK:
             case TokenType::KEYWORD_CONTINUE:
+            case TokenType::KEYWORD_STRUCT:
             case TokenType::RIGHT_BRACE: 
                 return;
             default:

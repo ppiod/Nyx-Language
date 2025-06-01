@@ -65,6 +65,7 @@ public:
     void visitForStatement(const ForStatement& stmt) override;
     void visitForeachStatement(const ForeachStatement& stmt) override;
     void visitSwitchStatement(const SwitchStatement& stmt) override;
+    void visitStructDeclarationStatement(const StructDeclarationStatement& stmt) override;
     void visitBreakStatement(const BreakStatement& stmt) override;
     void visitContinueStatement(const ContinueStatement& stmt) override;
 
@@ -80,7 +81,8 @@ public:
     NyxValue visitInterpolatedStringExpression(const InterpolatedStringExpression& expr) override;
     NyxValue visitCallExpression(const CallExpression& expr) override;
     NyxValue visitMemberAccessExpression(const MemberAccessExpression& expr) override;
-    
+    NyxValue visitStructInitializerExpression(const StructInitializerExpression& expr) override;
+
     void registerNativeModule(const std::string& name, NativeModuleBuilder builder);
     std::shared_ptr<Environment> globals;
 

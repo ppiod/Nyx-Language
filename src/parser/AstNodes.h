@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <variant>
+#include <map> 
 #include "../tokenizer/Token.h"
 #include "../common/Value.h"
 
@@ -113,6 +114,16 @@ struct MemberAccessExpression : public Expression {
     NyxValue accept(ExpressionVisitor& visitor) const override;
 };
 
+struct StructInitializerExpression : public Expression {
+    Token name_token;
+    std::vector<std::pair<Token, std::unique_ptr<Expression>>> initializers;
+
+    StructInitializerExpression(Token name_tok, std::vector<std::pair<Token, std::unique_ptr<Expression>>> inits)
+        : Expression(name_tok), name_token(std::move(name_tok)), initializers(std::move(inits)) {}
+
+    NyxValue accept(ExpressionVisitor& visitor) const override;
+};
+
 struct Statement {
     virtual ~Statement() = default;
     virtual void accept(StatementVisitor& visitor) const = 0;
@@ -219,8 +230,7 @@ struct ForeachStatement : public Statement {
         : foreach_token(std::move(ft)), 
           loop_variable_token(std::move(lvt)),
           iterable_expression(std::move(iterable)),
-          body_statement(std::move(body)) {
-    }
+          body_statement(std::move(body)) {}
 
     void accept(StatementVisitor& visitor) const override;
 };
@@ -253,6 +263,18 @@ struct SwitchStatement : public Statement {
     void accept(StatementVisitor& visitor) const override;
 };
 
+struct StructDeclarationStatement : public Statement {
+    Token struct_keyword_token;
+    Token name_token;
+    std::vector<Token> field_name_tokens;
+
+    StructDeclarationStatement(Token kw_token, Token n_token, std::vector<Token> fields)
+        : struct_keyword_token(std::move(kw_token)), 
+          name_token(std::move(n_token)), 
+          field_name_tokens(std::move(fields)) {}
+    
+    void accept(StatementVisitor& visitor) const override;
+};
 
 struct BreakStatement : public Statement {
     Token keyword_break;
@@ -281,6 +303,7 @@ public:
     virtual NyxValue visitInterpolatedStringExpression(const InterpolatedStringExpression& expr) = 0;
     virtual NyxValue visitCallExpression(const CallExpression& expr) = 0;
     virtual NyxValue visitMemberAccessExpression(const MemberAccessExpression& expr) = 0;
+    virtual NyxValue visitStructInitializerExpression(const StructInitializerExpression& expr) = 0;
 };
 
 class StatementVisitor {
@@ -299,6 +322,7 @@ public:
     virtual void visitForStatement(const ForStatement& stmt) = 0;
     virtual void visitForeachStatement(const ForeachStatement& stmt) = 0;
     virtual void visitSwitchStatement(const SwitchStatement& stmt) = 0;
+    virtual void visitStructDeclarationStatement(const StructDeclarationStatement& stmt) = 0;
     virtual void visitBreakStatement(const BreakStatement& stmt) = 0;
     virtual void visitContinueStatement(const ContinueStatement& stmt) = 0;
 };
@@ -315,6 +339,7 @@ inline NyxValue SubscriptExpression::accept(ExpressionVisitor& visitor) const { 
 inline NyxValue InterpolatedStringExpression::accept(ExpressionVisitor& visitor) const { return visitor.visitInterpolatedStringExpression(*this); }
 inline NyxValue CallExpression::accept(ExpressionVisitor& visitor) const { return visitor.visitCallExpression(*this); }
 inline NyxValue MemberAccessExpression::accept(ExpressionVisitor& visitor) const { return visitor.visitMemberAccessExpression(*this); }
+inline NyxValue StructInitializerExpression::accept(ExpressionVisitor& visitor) const { return visitor.visitStructInitializerExpression(*this); }
 
 inline void ExpressionStatement::accept(StatementVisitor& visitor) const { visitor.visitExpressionStatement(*this); }
 inline void BlockStatement::accept(StatementVisitor& visitor) const { visitor.visitBlockStatement(*this); }
@@ -329,6 +354,7 @@ inline void IfStatement::accept(StatementVisitor& visitor) const { visitor.visit
 inline void ForStatement::accept(StatementVisitor& visitor) const { visitor.visitForStatement(*this); }
 inline void ForeachStatement::accept(StatementVisitor& visitor) const { visitor.visitForeachStatement(*this); }
 inline void SwitchStatement::accept(StatementVisitor& visitor) const { visitor.visitSwitchStatement(*this); }
+inline void StructDeclarationStatement::accept(StatementVisitor& visitor) const { visitor.visitStructDeclarationStatement(*this); }
 inline void BreakStatement::accept(StatementVisitor& visitor) const { visitor.visitBreakStatement(*this); }
 inline void ContinueStatement::accept(StatementVisitor& visitor) const { visitor.visitContinueStatement(*this); }
 

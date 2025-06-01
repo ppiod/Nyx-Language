@@ -5,7 +5,8 @@
 #include <vector>
 #include <iostream>
 #include <memory>
-#include <functional> 
+#include <functional>
+#include <map> 
 
 namespace Nyx {
 
@@ -20,6 +21,9 @@ struct NyxSDLFontWrapper;
 struct NyxSDLSurfaceWrapper;
 struct NyxSDLTextureWrapper;
 
+struct NyxStructDefinition; 
+struct NyxStructInstance;  
+
 struct NyxValueData;
 using UserDefinedFunctionPtr = std::shared_ptr<NyxDefinedFunction>;
 using NyxModule = std::shared_ptr<NyxModuleData>;
@@ -30,6 +34,9 @@ using SDLRendererNyxPtr = std::shared_ptr<NyxSDLRendererWrapper>;
 using SDLFontNyxPtr = std::shared_ptr<NyxSDLFontWrapper>;
 using SDLSurfaceNyxPtr = std::shared_ptr<NyxSDLSurfaceWrapper>;
 using SDLTextureNyxPtr = std::shared_ptr<NyxSDLTextureWrapper>;
+using StructDefinitionPtr = std::shared_ptr<NyxStructDefinition>;
+using StructInstancePtr = std::shared_ptr<NyxStructInstance>;
+
 
 struct NyxValueData {
     std::variant<
@@ -45,7 +52,9 @@ struct NyxValueData {
         SDLRendererNyxPtr,
         SDLFontNyxPtr,
         SDLSurfaceNyxPtr,
-        SDLTextureNyxPtr 
+        SDLTextureNyxPtr,
+        StructDefinitionPtr, 
+        StructInstancePtr  
     > data;
 
     NyxValueData();
@@ -73,6 +82,10 @@ struct NyxValueData {
     NyxValueData(SDLSurfaceNyxPtr&& val);
     NyxValueData(const SDLTextureNyxPtr& val);
     NyxValueData(SDLTextureNyxPtr&& val);
+    NyxValueData(const StructDefinitionPtr& val); 
+    NyxValueData(StructDefinitionPtr&& val);    
+    NyxValueData(const StructInstancePtr& val); 
+    NyxValueData(StructInstancePtr&& val);    
 
     template<
         typename T,
@@ -85,8 +98,7 @@ struct NyxValueData {
 };
 
 using NyxValue = NyxValueData;
-
-using NyxList = std::vector<NyxValue>;
+using NyxList = std::vector<NyxValue>; 
 using NativeFunctionCallback = NyxValue (*)(Interpreter&, const std::vector<NyxValue>&);
 
 struct NyxNativeFunction {
@@ -97,6 +109,24 @@ struct NyxNativeFunction {
     NyxNativeFunction(std::string n, NativeFunctionCallback cb, int ar) 
         : name(std::move(n)), callback(cb), arity(ar) {}
 };
+
+struct Token; 
+
+struct NyxStructDefinition {
+    std::string name;
+    std::vector<std::string> field_names_in_order;
+    std::map<std::string, size_t> field_indices;
+
+    NyxStructDefinition(std::string n, const std::vector<Token>& field_tokens); 
+};
+
+struct NyxStructInstance {
+    StructDefinitionPtr definition;
+    std::vector<NyxValue> field_values;
+
+    NyxStructInstance(StructDefinitionPtr def);
+};
+
 
 inline NyxValueData::NyxValueData() : data(std::monostate{}) {}
 inline NyxValueData::NyxValueData(std::monostate val) : data(val) {}
@@ -123,6 +153,11 @@ inline NyxValueData::NyxValueData(const SDLSurfaceNyxPtr& val) : data(val) {}
 inline NyxValueData::NyxValueData(SDLSurfaceNyxPtr&& val) : data(std::move(val)) {}
 inline NyxValueData::NyxValueData(const SDLTextureNyxPtr& val) : data(val) {}
 inline NyxValueData::NyxValueData(SDLTextureNyxPtr&& val) : data(std::move(val)) {}
+inline NyxValueData::NyxValueData(const StructDefinitionPtr& val) : data(val) {}
+inline NyxValueData::NyxValueData(StructDefinitionPtr&& val) : data(std::move(val)) {}
+inline NyxValueData::NyxValueData(const StructInstancePtr& val) : data(val) {}
+inline NyxValueData::NyxValueData(StructInstancePtr&& val) : data(std::move(val)) {}
+
 
 template<typename T, typename U>
 NyxValueData::NyxValueData(T&& value) : data(std::forward<T>(value)) {}

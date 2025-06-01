@@ -34,5 +34,8 @@ bool Environment::assign(const std::string& name, const NyxValue& value) {
     return false;
 }
 
+bool Environment::isDefinedLocally(const std::string& name) const {
+    return values.count(name) > 0;
+}
 
 }

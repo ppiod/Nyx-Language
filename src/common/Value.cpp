@@ -1,8 +1,27 @@
-#include "./Value.h"
+#include "../common/Value.h"
 #include "../interpreter/Interpreter.h" 
+#include "../interpreter/Environment.h" 
+#include "../stdlib/sdl_module.h"
+#include "../tokenizer/Token.h"
+#include <iomanip>
 #include <sstream>
+#include <map>
+
 
 namespace Nyx {
+
+NyxStructDefinition::NyxStructDefinition(std::string n, const std::vector<Token>& field_tokens) : name(std::move(n)) {
+    for (const auto& token : field_tokens) {
+        field_names_in_order.push_back(token.lexeme);
+        field_indices[token.lexeme] = field_names_in_order.size() - 1;
+    }
+}
+
+NyxStructInstance::NyxStructInstance(StructDefinitionPtr def) : definition(std::move(def)) {
+    if (definition) {
+        field_values.resize(definition->field_names_in_order.size(), NyxValue(std::monostate{}));
+    }
+}
 
 std::string nyxValueToString(const NyxValue& value_holder) {
     const auto& var_data = value_holder.data;
@@ -58,6 +77,25 @@ std::string nyxValueToString(const NyxValue& value_holder) {
         return "<SDL_SurfaceHandle>";
     } else if (std::holds_alternative<SDLTextureNyxPtr>(var_data)) {
         return "<SDL_TextureHandle>";
+    } else if (std::holds_alternative<StructDefinitionPtr>(var_data)) {
+        auto def_ptr = std::get<StructDefinitionPtr>(var_data);
+        if (def_ptr) return "<struct_definition " + def_ptr->name + ">";
+        return "<struct_definition null_ptr>";
+    } else if (std::holds_alternative<StructInstancePtr>(var_data)) {
+        auto instance_ptr = std::get<StructInstancePtr>(var_data);
+        if (instance_ptr && instance_ptr->definition) {
+            std::stringstream ss;
+            ss << instance_ptr->definition->name << "{";
+            bool first = true;
+            for (size_t i = 0; i < instance_ptr->definition->field_names_in_order.size(); ++i) {
+                if (!first) ss << ", ";
+                ss << instance_ptr->definition->field_names_in_order[i] << ": " << nyxValueToString(instance_ptr->field_values[i]);
+                first = false;
+            }
+            ss << "}";
+            return ss.str();
+        }
+        return "<struct_instance null_ptr>";
     }
     return "[Unknown NyxValue]";
 }
@@ -78,6 +116,14 @@ std::string nyxValueTypeToString(const NyxValue& value_holder) {
     else if (std::holds_alternative<SDLFontNyxPtr>(var_data)) { return "SDL_FONT"; }
     else if (std::holds_alternative<SDLSurfaceNyxPtr>(var_data)) { return "SDL_SURFACE"; }
     else if (std::holds_alternative<SDLTextureNyxPtr>(var_data)) { return "SDL_TEXTURE"; }
+    else if (std::holds_alternative<StructDefinitionPtr>(var_data)) { return "STRUCT_DEFINITION"; }
+    else if (std::holds_alternative<StructInstancePtr>(var_data)) { 
+        auto instance_ptr = std::get<StructInstancePtr>(var_data);
+        if (instance_ptr && instance_ptr->definition) {
+            return "STRUCT<" + instance_ptr->definition->name + ">";
+        }
+        return "STRUCT_INSTANCE";
+     }
     return "UNKNOWN_TYPE";
 }
 

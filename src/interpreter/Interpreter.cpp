@@ -15,7 +15,6 @@ std::map<std::string, NyxValue> Interpreter::loaded_modules_cache;
 std::map<std::string, Interpreter::NativeModuleBuilder> Interpreter::native_module_builders;
 bool Interpreter::core_modules_registered = false;
 
-
 Interpreter::Interpreter() {
     globals = std::make_shared<Environment>();
     environment = globals;
@@ -415,6 +414,50 @@ void Interpreter::visitSwitchStatement(const SwitchStatement& stmt) {
     }
 }
 
+void Interpreter::visitStructDeclarationStatement(const StructDeclarationStatement& stmt) {
+    std::string name = stmt.name_token.lexeme;
+    if (environment->isDefinedLocally(name)) { 
+        throw Common::NyxRuntimeException("Struct '" + name + "' already defined in this scope.", stmt.name_token.line);
+    }
+
+    auto struct_def = std::make_shared<NyxStructDefinition>(name, stmt.field_name_tokens);
+
+    environment->define(name, NyxValue(struct_def)); 
+}
+
+NyxValue Interpreter::visitStructInitializerExpression(const StructInitializerExpression& expr) {
+    std::string struct_name = expr.name_token.lexeme;
+    std::optional<NyxValue> def_value_opt = environment->get(struct_name);
+
+    if (!def_value_opt || !std::holds_alternative<StructDefinitionPtr>(def_value_opt->data)) {
+        throw Common::NyxRuntimeException("Undefined struct type '" + struct_name + "'.", expr.name_token.line);
+    }
+    StructDefinitionPtr struct_def = std::get<StructDefinitionPtr>(def_value_opt->data);
+
+    auto instance = std::make_shared<NyxStructInstance>(struct_def);
+
+    std::vector<bool> initialized_fields(struct_def->field_names_in_order.size(), false);
+
+    for (const auto& pair : expr.initializers) {
+        const Token& field_name_token = pair.first;
+        const std::string& field_name = field_name_token.lexeme;
+
+        auto it = struct_def->field_indices.find(field_name);
+        if (it == struct_def->field_indices.end()) {
+            throw Common::NyxRuntimeException("Struct '" + struct_name + "' has no field named '" + field_name + "'.", field_name_token.line);
+        }
+        size_t field_idx = it->second;
+        if (initialized_fields[field_idx]) {
+             throw Common::NyxRuntimeException("Field '" + field_name + "' initialized more than once.", field_name_token.line);
+        }
+
+        instance->field_values[field_idx] = evaluate(*pair.second);
+        initialized_fields[field_idx] = true;
+    }
+
+    return NyxValue(instance);
+}
+
 void Interpreter::visitBreakStatement(const BreakStatement& stmt) {
     throw Common::NyxBreakSignal();
 }
@@ -441,18 +484,30 @@ NyxValue Interpreter::visitAssignmentExpression(const AssignmentExpression& expr
         if (!std::holds_alternative<double>(index_holder.data)) {
             throw Common::NyxRuntimeException("List index for assignment must be a number.", sub_target->closing_bracket.line);
         }
-        double raw_index = std::get<double>(index_holder.data);
-        if (!isDoubleInteger(raw_index)) {
+        double raw_index_double = std::get<double>(index_holder.data);
+        if (!isDoubleInteger(raw_index_double)) {
             throw Common::NyxRuntimeException("List index for assignment must be an integer.", sub_target->closing_bracket.line);
         }
-        double int_index_double = std::trunc(raw_index);
-
+        
+        long long requested_index = static_cast<long long>(std::trunc(raw_index_double));
         NyxList list_copy = std::get<NyxList>(list_obj_holder.data);
+        long long list_size = static_cast<long long>(list_copy.size());
 
-        if (int_index_double < 0 || static_cast<size_t>(int_index_double) >= list_copy.size()) {
-            throw Common::NyxRuntimeException("List index out of bounds for assignment. Index: " + std::to_string(static_cast<long long>(int_index_double)) + ", Size: " + std::to_string(list_copy.size()), sub_target->closing_bracket.line);
+        if (list_size == 0 && (requested_index < 0 || requested_index >= 0) ) {
+             throw Common::NyxRuntimeException("List index out of bounds for assignment: list is empty. Index: " + std::to_string(requested_index), sub_target->closing_bracket.line);
         }
-        size_t actual_index = static_cast<size_t>(int_index_double);
+        
+        if (requested_index < 0) {
+            requested_index = list_size + requested_index;
+        }
+        
+        if (requested_index < 0 || requested_index >= list_size) {
+            throw Common::NyxRuntimeException("List index out of bounds for assignment. Requested: " + 
+                                             std::to_string(static_cast<long long>(std::trunc(raw_index_double))) +
+                                             ", Effective: " + std::to_string(requested_index) +
+                                             ", Size: " + std::to_string(list_size), sub_target->closing_bracket.line);
+        }
+        size_t actual_index = static_cast<size_t>(requested_index);
         list_copy[actual_index] = value_to_assign;
         
         if (auto list_identifier = dynamic_cast<const IdentifierExpression*>(sub_target->object.get())) {
@@ -464,15 +519,33 @@ NyxValue Interpreter::visitAssignmentExpression(const AssignmentExpression& expr
         }
     } else if (auto member_target = dynamic_cast<const MemberAccessExpression*>(expr.target.get())) {
         NyxValue object_val = evaluate(*member_target->object);
-        if (!std::holds_alternative<NyxModule>(object_val.data)) {
-            throw Common::NyxRuntimeException("Base of member assignment '.' must be a module.", member_target->token.line);
+        
+        if (std::holds_alternative<NyxModule>(object_val.data)) {
+            auto module_data_ptr = std::get<NyxModule>(object_val.data);
+            if (!module_data_ptr || !module_data_ptr->environment) {
+                 throw Common::NyxRuntimeException("Invalid module object for member assignment.", member_target->token.line);
+            }
+            if (!module_data_ptr->environment->assign(member_target->name.lexeme, value_to_assign)) {
+                throw Common::NyxRuntimeException("Cannot assign to undefined member '" + member_target->name.lexeme + "' in module '" + module_data_ptr->path + "'.", member_target->name.line);
+            }
+        } else if (std::holds_alternative<StructInstancePtr>(object_val.data)) {
+            auto instance_ptr = std::get<StructInstancePtr>(object_val.data);
+            if (!instance_ptr || !instance_ptr->definition) {
+                throw Common::NyxRuntimeException("Invalid struct instance for field assignment.", member_target->token.line);
+            }
+            const std::string& field_name = member_target->name.lexeme;
+            auto it = instance_ptr->definition->field_indices.find(field_name);
+            if (it == instance_ptr->definition->field_indices.end()) {
+                throw Common::NyxRuntimeException("Struct '" + instance_ptr->definition->name + "' has no field named '" + field_name + "'.", member_target->name.line);
+            }
+            size_t field_idx = it->second;
+            if (field_idx >= instance_ptr->field_values.size()){
+                 throw Common::NyxRuntimeException("Field index out of bounds for struct '" + instance_ptr->definition->name + "'. This should not happen.", member_target->name.line);
+            }
+            instance_ptr->field_values[field_idx] = value_to_assign;
         }
-        auto module_data_ptr = std::get<NyxModule>(object_val.data);
-        if (!module_data_ptr || !module_data_ptr->environment) {
-             throw Common::NyxRuntimeException("Invalid module object for member assignment.", member_target->token.line);
-        }
-        if (!module_data_ptr->environment->assign(member_target->name.lexeme, value_to_assign)) {
-            throw Common::NyxRuntimeException("Cannot assign to undefined member '" + member_target->name.lexeme + "' in module '" + module_data_ptr->path + "'.", member_target->name.line);
+        else {
+            throw Common::NyxRuntimeException("Base of member assignment '.' must be a module or a struct instance.", member_target->token.line);
         }
     }
     else {
@@ -837,21 +910,32 @@ NyxValue Interpreter::visitCallExpression(const CallExpression& expr) {
 
 NyxValue Interpreter::visitMemberAccessExpression(const MemberAccessExpression& expr) {
     NyxValue object_val = evaluate(*expr.object);
-    if (!std::holds_alternative<NyxModule>(object_val.data)) {
-        throw Common::NyxRuntimeException("Base of member access '.' must be a module.", expr.token.line);
-    }
-    
-    auto module_data_ptr = std::get<NyxModule>(object_val.data);
-    if (!module_data_ptr || !module_data_ptr->environment) {
-        throw Common::NyxRuntimeException("Invalid module object.", expr.token.line);
-    }
-    
-    std::optional<NyxValue> member_val = module_data_ptr->environment->get(expr.name.lexeme);
 
-    if (!member_val) {
-        throw Common::NyxRuntimeException("Member '" + expr.name.lexeme + "' not found in module '" + module_data_ptr->path + "'.", expr.name.line);
+    if (std::holds_alternative<NyxModule>(object_val.data)) {
+        auto module_data_ptr = std::get<NyxModule>(object_val.data);
+        if (!module_data_ptr || !module_data_ptr->environment) {
+             throw Common::NyxRuntimeException("Invalid module object.", expr.token.line);
+        }
+        std::optional<NyxValue> member_val = module_data_ptr->environment->get(expr.name.lexeme);
+        if (!member_val) {
+            throw Common::NyxRuntimeException("Member '" + expr.name.lexeme + "' not found in module '" + module_data_ptr->path + "'.", expr.name.line);
+        }
+        return *member_val;
+    } else if (std::holds_alternative<StructInstancePtr>(object_val.data)) {
+        auto instance_ptr = std::get<StructInstancePtr>(object_val.data);
+        if (!instance_ptr || !instance_ptr->definition) {
+            throw Common::NyxRuntimeException("Invalid struct instance.", expr.token.line);
+        }
+        const std::string& field_name = expr.name.lexeme;
+        auto it = instance_ptr->definition->field_indices.find(field_name);
+        if (it == instance_ptr->definition->field_indices.end()) {
+            throw Common::NyxRuntimeException("Struct '" + instance_ptr->definition->name + "' has no field named '" + field_name + "'.", expr.name.line);
+        }
+        size_t field_idx = it->second;
+        return instance_ptr->field_values[field_idx];
     }
-    return *member_val;
+
+    throw Common::NyxRuntimeException("Base of member access '.' must be a module or struct instance.", expr.token.line);
 }
 
 NyxValue Interpreter::executeFunctionBody(const NyxDefinedFunction& function, const std::vector<NyxValue>& arguments) {

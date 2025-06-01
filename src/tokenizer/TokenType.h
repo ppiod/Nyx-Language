@@ -28,6 +28,7 @@ enum class TokenType {
     KEYWORD_SWITCH,     // switch
     KEYWORD_CASE,       // case
     KEYWORD_DEFAULT,    // default
+    KEYWORD_STRUCT,     // structs
 
     // Literals & Identifiers
     IDENTIFIER,         // variable_name, function_name

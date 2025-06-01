@@ -28,6 +28,7 @@ Tokenizer::Tokenizer(std::string source) : source_code(std::move(source)) {
     keywords["switch"] = TokenType::KEYWORD_SWITCH;
     keywords["case"] = TokenType::KEYWORD_CASE;
     keywords["default"] = TokenType::KEYWORD_DEFAULT;
+    keywords["struct"] = TokenType::KEYWORD_STRUCT;
 }
 
 char Tokenizer::peek() {
